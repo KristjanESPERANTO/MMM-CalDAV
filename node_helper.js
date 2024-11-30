@@ -122,7 +122,7 @@ END:VEVENT`)
           saveIcs(fileName, birthdays.join('\r\n'))
         }
       } else { // caldav
-        const today = new Date()
+        const today = new Date(Date.now())
         const start = new Date(new Date(today.valueOf()).setDate(today.getDate() + timeRangeStart)).toISOString()
         const end = new Date(new Date(today.valueOf()).setDate(today.getDate() + timeRangeEnd)).toISOString()
 
