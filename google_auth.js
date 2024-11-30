@@ -31,7 +31,10 @@ app.get('/', (req, res) => {
       'https://www.googleapis.com/auth/calendar.events',
     ],
   })
-  //console.log(url)
+  console.log(`
+Or you can open the following URL in your browser:
+${url}
+  `)
   res.writeHead(302, { Location: url })
   res.end()
 })

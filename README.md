@@ -1,4 +1,5 @@
 # MMM-CalDAV
+![screenshot](https://raw.githubusercontent.com/MMRIZE/public_ext_storage/main/MMM-CalDAV/screenshot.png)
 CalDav broker for MagicMirror
 
 ## Concept & Motivation
@@ -127,7 +128,14 @@ The real extracted & parsed result will be stored under `modules/MMM-CalDAV/serv
 |`updateInterval`| config value | You can override the specific interval for this server.|
 |`targets`| [] | (Array of string/object) addressBook filter by its name. [] would be all addressBooks. |
 
-There would be more properties, but 99.99% of users would not need them.
+There would be more properties, but 99.99% of users would not need them. But if you have interest, see the belows;
+
+#### Additional server properties (For an expert)
+|**Field**|**Default**|**Description**|
+|---|---|---|
+|`expand` | true | Forcing the server to expand recurring components into individual calendar objects. If you have some trouble with **REPEATED EVENTS**, try this to `false`}|
+|`useMultiGet` | true | This is used to retrieve specific calendar object resources from within a collection. Usually you don't have to change this. |
+
 
 
 #### `targets` array
@@ -334,22 +342,17 @@ servers: [
 - If the name of generated `.ics` is duplicated, it will be overwritten. Separate them with `icsName` by manual.
 - At this moment, all address books will be retrieved. Filtering is not supported. (I need help to get real examples to know the multi-addressbooks structure.)
 
+## See the Wiki for more tips
+https://github.com/MMRIZE/MMM-CalDAV/wiki
 
+## History
+### `2.1.1` (2024-11-30)
+- ADD: Revealing URL on `google_auth` script to open the browser by hand.
+- ADD: Description of hidden properties of config. (#9)
+- ADD: `eslint` things
+- UPDATE: some dependencies
 
-## Release
-### `2.1.0` (2023-12-29)
-- Birthday calendar enabled. (`CardDAV` implementation)
-- Some code refactoring.
-- `calendars: [],` is changed to `targets: []`. you have to reconfigure your `config.js`
-
-### `2.0.0` (2023-10-25)
-- Newly rebuilt from scratch
-- OAUTH supported (For Google Calendar)
-- Multi calendars/servers in one module.
-- More secure and efficiently
-
-### `1.0.0` (2021-09-29)
-- released
+[More History](https://github.com/MMRIZE/MMM-CalDAV/wiki/History)
 
 ## Author
 - Seongnoh Yi (eouia0819@gmail.com)
