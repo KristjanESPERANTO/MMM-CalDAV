@@ -144,7 +144,7 @@ There would be more properties, but 99.99% of users would not need them. But if 
 #### Additional server properties (For an expert)
 |**Field**|**Default**|**Description**|
 |---|---|---|
-|`expand` | true | Forcing the server to expand recurring components into individual calendar objects. If you have some trouble with **REPEATED EVENTS**, try this to `false`}|
+|`expand` | false | When enabled, the server expands recurring components into individual calendar objects. Keep this disabled when the calendar consumer should process `RRULE`; enable it only when expanded events are needed.|
 |`useMultiGet` | true | This is used to retrieve specific calendar object resources from within a collection. Usually you don't have to change this. |
 
 

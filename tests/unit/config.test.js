@@ -44,6 +44,7 @@ describe('MMM-CalDAV configuration', () => {
         envPrefix: 'TEST_',
         serverUrl: 'https://caldav.example.test',
         timeRangeStart: -7,
+        expand: true,
         targets: [
           'Family',
           { displayName: 'Work' },
@@ -58,6 +59,7 @@ describe('MMM-CalDAV configuration', () => {
 
     assert.equal(server.defaultAccountType, 'caldav')
     assert.equal(server.authMethod, 'Basic')
+    assert.equal(server.expand, true)
     assert.equal(server.timeRangeStart, -7)
     assert.equal(server.timeRangeEnd, 90)
     assert.equal(server.updateInterval, 60000)
@@ -78,6 +80,7 @@ describe('MMM-CalDAV configuration', () => {
     startModule(config)
 
     assert.equal(config.servers[0].defaultAccountType, 'carddav')
+    assert.equal(config.servers[0].expand, false)
     assert.deepEqual(config.servers[0].targets, [])
   })
 })

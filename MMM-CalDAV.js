@@ -17,7 +17,7 @@ Module.register('MMM-CalDAV', {
       targets: [],
       timeRangeStart: this.config.timeRangeStart,
       timeRangeEnd: this.config.timeRangeEnd,
-      expand: true,
+      expand: false,
       useMultiGet: true,
       updateInterval: this.config.updateInterval,
       credentials: {},
