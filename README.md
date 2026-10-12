@@ -357,13 +357,7 @@ servers: [
 https://github.com/MMRIZE/MMM-CalDAV/wiki
 
 ## History
-### `2.1.1` (2024-11-30)
-- ADD: Revealing URL on `google_auth` script to open the browser by hand.
-- ADD: Description of hidden properties of config. (#9)
-- ADD: `eslint` things
-- UPDATE: some dependencies
-
-[More History](https://github.com/MMRIZE/MMM-CalDAV/wiki/History)
+See [CHANGELOG.md](CHANGELOG.md) for the complete release history.
 
 ## Author
 - Seongnoh Yi (eouia0819@gmail.com)
