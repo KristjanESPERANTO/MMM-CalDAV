@@ -7,8 +7,8 @@
     "demo": "cd ../../ && MM_CONFIG_FILE=modules/MMM-CalDAV/demo.config.js node --run start:dev",
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "cp env.example .env",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "type": "git",
