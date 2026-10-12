@@ -7,7 +7,7 @@ const vCard = require('vcard-parser')
 const fs = require('fs').promises
 const createReadStream = require('fs').createReadStream
 
-var NodeHelper = require('node_helper')
+const NodeHelper = require('node_helper')
 class Fetcher {
   constructor(options) {
     const prefix = options.envPrefix || ''
@@ -72,7 +72,7 @@ ${vevents}
 END:VCALENDAR`
       }
       const fileCoded = encodeURIComponent(fileId || 'untitled')
-      let fileName = encodeURI(envPrefix + (fileCoded).replace(/[^\w\s]/g, '_') + '.ics')
+      const fileName = encodeURI(envPrefix + (fileCoded).replace(/[^\w\s]/g, '_') + '.ics')
       const filePath = path.resolve(__dirname, 'service', '.' + fileName)
       await fs.writeFile(filePath, buildVcalendar(vevents))
       console.log(`[CALDAV] File: ${fileName} is refreshed.`)
@@ -90,14 +90,14 @@ END:VCALENDAR`
       await client.login()
       if (defaultAccountType === 'carddav') { //carddav
         const fetchedAddressBooks = await client.fetchAddressBooks()
-        for (let addressBook of fetchedAddressBooks) {
+        for (const addressBook of fetchedAddressBooks) {
           //console.log(addressBook) /* To help to gather addressBook info, especially displayName */
           if (!inTargets(addressBook.displayName, targets)) continue
           const birthdays = []
           const vcards = await client.fetchVCards({
             addressBook,
           })
-          for (let vcard of vcards) {
+          for (const vcard of vcards) {
             // console.log(vcard) /* To help to gather vcard info, especially data */
             const card = vCard.parse(vcard.data.toString())
             const birthday = card?.bday?.[0]?.value ?? false
@@ -128,7 +128,7 @@ END:VEVENT`)
         const end = new Date(new Date(today.valueOf()).setDate(today.getDate() + timeRangeEnd)).toISOString()
 
         const fetchedCalendars = await client.fetchCalendars()
-        for (let calendar of fetchedCalendars) {
+        for (const calendar of fetchedCalendars) {
           if (!inTargets(calendar.displayName, targets)) continue
           const objects = await client.fetchCalendarObjects({
             calendar,
@@ -202,7 +202,7 @@ module.exports = NodeHelper.create({
   socketNotificationReceived: function (notification, payload) {
     if (notification === 'REGISTER') {
       const servers = payload.servers || []
-      for (let server of servers) {
+      for (const server of servers) {
         this.fetchers.push(new Fetcher(server))
       }
     }
