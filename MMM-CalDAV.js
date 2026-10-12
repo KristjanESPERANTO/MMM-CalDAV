@@ -1,3 +1,4 @@
+/* global Module */
 Module.register('MMM-CalDAV', {
   defaults: {
     updateInterval: 15 * 60 * 1000,
