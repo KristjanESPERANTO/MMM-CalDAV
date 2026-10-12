@@ -222,35 +222,41 @@ describe('MMM-CalDAV node helper', () => {
   })
 
   test('generates a yearly all-day event for a CardDAV birthday', async (t) => {
-    state.addressBooks = [{ displayName: 'Contacts' }]
-    state.vcards.Contacts = [{ data: Buffer.from('contact-1') }]
-    state.parsedCards['contact-1'] = {
-      bday: [{ value: '2000-06-15' }],
-      uid: [{ value: 'birthday-1' }],
-      rev: [{ value: '2024-01-02T03:04:05.000Z' }],
-      fn: [{ value: 'Ada Lovelace' }],
+    const previousTimezone = process.env.TZ
+    process.env.TZ = 'America/Los_Angeles'
+    try {
+      state.addressBooks = [{ displayName: 'Contacts' }]
+      state.vcards.Contacts = [{ data: Buffer.from('contact-1') }]
+      state.parsedCards['contact-1'] = {
+        bday: [{ value: '2000-06-15' }],
+        uid: [{ value: 'birthday-1' }],
+        rev: [{ value: '2024-01-02T03:04:05.000Z' }],
+        fn: [{ value: 'Ada Lovelace' }],
+      }
+
+      const run = startFetcher(t, {
+        envPrefix: 'UNIT_CALDAV_',
+        defaultAccountType: 'carddav',
+        updateInterval: 60000,
+        targets: [{ displayName: 'Contacts', icsName: 'birthdays' }],
+      })
+      await run.finished
+
+      assert.deepEqual(state.errors, [])
+      assert.deepEqual(state.fetchedAddressBooks, ['Contacts'])
+      assert.equal(writes.length, 1)
+      assert.equal(path.basename(writes[0].filePath), '.UNIT_CALDAV_birthdays.ics')
+      assert.match(writes[0].content, /UID:birthday-1/)
+      assert.match(writes[0].content, /SUMMARY:Ada Lovelace/)
+      assert.match(writes[0].content, /DTSTART;VALUE=DATE:20000615/)
+      assert.match(writes[0].content, /DTEND;VALUE=DATE:20000616/)
+      assert.match(writes[0].content, /RRULE:FREQ=YEARLY/)
+    } finally {
+      if (previousTimezone === undefined) {
+        delete process.env.TZ
+      } else {
+        process.env.TZ = previousTimezone
+      }
     }
-
-    const run = startFetcher(t, {
-      envPrefix: 'UNIT_CALDAV_',
-      defaultAccountType: 'carddav',
-      updateInterval: 60000,
-      targets: [{ displayName: 'Contacts', icsName: 'birthdays' }],
-    })
-    await run.finished
-
-    assert.deepEqual(state.errors, [])
-    assert.deepEqual(state.fetchedAddressBooks, ['Contacts'])
-    const birthday = new Date('2000-06-15')
-    const birthdayEnd = new Date(birthday.getFullYear(), birthday.getMonth(), birthday.getDate() + 1)
-    const formatDate = (date) => `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`
-
-    assert.equal(writes.length, 1)
-    assert.equal(path.basename(writes[0].filePath), '.UNIT_CALDAV_birthdays.ics')
-    assert.match(writes[0].content, /UID:birthday-1/)
-    assert.match(writes[0].content, /SUMMARY:Ada Lovelace/)
-    assert.match(writes[0].content, new RegExp(`DTSTART;VALUE=DATE:${formatDate(birthday)}`))
-    assert.match(writes[0].content, new RegExp(`DTEND;VALUE=DATE:${formatDate(birthdayEnd)}`))
-    assert.match(writes[0].content, /RRULE:FREQ=YEARLY/)
   })
 })

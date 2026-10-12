@@ -44,7 +44,7 @@ class Fetcher {
     })
 
     const dateFormat = (dt) => {
-      return `${dt.getFullYear()}${(dt.getMonth() + 1).toString().padStart(2, '0')}${dt.getDate().toString().padStart(2, '0')}`
+      return `${dt.getUTCFullYear()}${(dt.getUTCMonth() + 1).toString().padStart(2, '0')}${dt.getUTCDate().toString().padStart(2, '0')}`
     }
 
     const convertDate = (str) => {
@@ -106,8 +106,8 @@ class Fetcher {
             const birthday = card?.bday?.[0]?.value ?? false
             if (birthday) {
               const uid = card?.uid?.[ 0 ]?.value ?? options.envPrefix + Date.now()
-              const bday = new Date(convertDate(birthday))
-              const bdayEnd = new Date(bday.getFullYear(), bday.getMonth(), bday.getDate() + 1)
+              const bday = new Date(`${convertDate(birthday)}T00:00:00.000Z`)
+              const bdayEnd = new Date(Date.UTC(bday.getUTCFullYear(), bday.getUTCMonth(), bday.getUTCDate() + 1))
               const rev = new Date(card?.rev?.[ 0 ]?.value ?? Date.now())
               const fn = card?.fn?.[ 0 ]?.value ?? card?.n?.[ 0 ]?.value?.join?.(' ') ?? 'Unknown'
 
