@@ -24,7 +24,7 @@ npm install
 ```sh
 cd ~/MagicMirror/modules/MMM-CalDAV
 git pull
-npm update
+npm install
 ```
 
 ## Demo
