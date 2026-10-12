@@ -12,6 +12,7 @@ const state = {
   calendarObjects: {},
   fetchedAddressBooks: [],
   fetchedCalendars: [],
+  fetchError: null,
   errors: [],
   parsedCards: {},
   vcards: {},
@@ -32,6 +33,7 @@ class MockDavClient {
 
   async fetchCalendarObjects({ calendar }) {
     state.fetchedCalendars.push(calendar.displayName)
+    if (state.fetchError) throw state.fetchError
     return state.calendarObjects[calendar.displayName] || []
   }
 
@@ -75,6 +77,7 @@ beforeEach(() => {
   state.calendarObjects = {}
   state.fetchedAddressBooks = []
   state.fetchedCalendars = []
+  state.fetchError = null
   state.errors = []
   state.parsedCards = {}
   state.vcards = {}
@@ -171,7 +174,7 @@ describe('MMM-CalDAV node helper', () => {
     assert.doesNotMatch(writes[0].content, /ignored-task|work-event/)
   })
 
-  test('does not write a feed when the selected calendar has no events', async (t) => {
+  test('writes an empty feed when the selected calendar has no events', async (t) => {
     state.calendars = [{ displayName: 'Empty' }]
     state.calendarObjects.Empty = [{
       data: Buffer.from('BEGIN:VCALENDAR\r\nEND:VCALENDAR'),
@@ -189,6 +192,32 @@ describe('MMM-CalDAV node helper', () => {
 
     assert.deepEqual(state.errors, [])
     assert.deepEqual(state.fetchedCalendars, ['Empty'])
+    assert.equal(writes.length, 1)
+    assert.equal(writes[0].content, [
+      'BEGIN:VCALENDAR',
+      'PRODID:-//github.com/MMRIZE/MMM-CalDAV',
+      'VERSION:2.0',
+      'END:VCALENDAR',
+      '',
+    ].join('\r\n'))
+  })
+
+  test('does not overwrite a feed when fetching events fails', async (t) => {
+    state.calendars = [{ displayName: 'Family' }]
+    state.fetchError = new Error('network unavailable')
+
+    const run = startFetcher(t, {
+      envPrefix: 'UNIT_CALDAV_',
+      defaultAccountType: 'caldav',
+      timeRangeStart: 0,
+      timeRangeEnd: 1,
+      updateInterval: 60000,
+      targets: [{ displayName: 'Family' }],
+    })
+    await run.finished
+
+    assert.equal(state.errors.length, 1)
+    assert.equal(state.errors[0][0], state.fetchError)
     assert.equal(writes.length, 0)
   })
 

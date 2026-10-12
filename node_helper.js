@@ -63,13 +63,16 @@ class Fetcher {
     }
 
     const saveIcs = async (fileId, vevents) => {
-      if (vevents.length === 0) return
       const buildVcalendar = (vevents) => {
-      return `BEGIN:VCALENDAR
-PRODID:-//github.com/MMRIZE/MMM-CalDAV
-VERSION:2.0
-${vevents}
-END:VCALENDAR`
+        const eventLines = vevents.replace(/(?:\r\n|\n)+$/, '')
+        const lines = [
+          'BEGIN:VCALENDAR',
+          'PRODID:-//github.com/MMRIZE/MMM-CalDAV',
+          'VERSION:2.0',
+        ]
+        if (eventLines) lines.push(eventLines)
+        lines.push('END:VCALENDAR', '')
+        return lines.join('\r\n')
       }
       const fileCoded = encodeURIComponent(fileId || 'untitled')
       const fileName = encodeURI(envPrefix + (fileCoded).replace(/[^\w\s]/g, '_') + '.ics')
