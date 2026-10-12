@@ -2,7 +2,7 @@ const path = require('path')
 const existsSync = require('fs').existsSync
 const envPath = path.resolve(__dirname, '.env')
 if (existsSync(envPath)) process.loadEnvFile(envPath)
-const { DAVClient, DAVNamespace } = require('tsdav')
+const { DAVClient } = require('tsdav')
 const vCard = require('vcard-parser')
 const fs = require('fs').promises
 const createReadStream = require('fs').createReadStream
@@ -175,7 +175,7 @@ module.exports = NodeHelper.create({
     this.seed = Math.random()
     this.fetchers = []
 
-    this.expressApp.get('/CALDAV/:file', (req, res, next) => {
+    this.expressApp.get('/CALDAV/:file', (req, res) => {
       const requested = req.params.file
       const realFile = '.' + requested
       const auth = req.get('Authorization')
