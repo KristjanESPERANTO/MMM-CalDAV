@@ -160,9 +160,7 @@ END:VEVENT`)
     } finally {
       this.timer = setTimeout(() => {
         this.work()
-        return
       }, options.updateInterval)
-      return
     }
   }
 }
