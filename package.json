@@ -8,6 +8,7 @@
     "demo": "cd ../../ && MM_CONFIG_FILE=modules/MMM-CalDAV/demo.config.js node --run start:dev",
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "cp env.example .env",
+    "release": "commit-and-tag-version",
     "lint": "eslint",
     "lint:fix": "eslint --fix"
   },
@@ -34,6 +35,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "commit-and-tag-version": "^13.2.1",
     "eslint": "^10.12.0",
     "globals": "^17.13.0",
     "googleapis": "^185.0.0",
