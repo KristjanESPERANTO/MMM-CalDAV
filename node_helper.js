@@ -106,7 +106,7 @@ END:VCALENDAR`
               const bday = new Date(convertDate(birthday))
               const bdayEnd = new Date(bday.getFullYear(), bday.getMonth(), bday.getDate() + 1)
               const rev = new Date(card?.rev?.[ 0 ]?.value ?? Date.now())
-              const fn = card?.fn?.[ 0 ]?.value ?? (card?.n?.[ 0 ]?.value).join(' ') ?? 'Unknown'
+              const fn = card?.fn?.[ 0 ]?.value ?? card?.n?.[ 0 ]?.value?.join?.(' ') ?? 'Unknown'
 
 
               birthdays.push(`BEGIN:VEVENT
