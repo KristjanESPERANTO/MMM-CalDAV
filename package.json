@@ -1,9 +1,9 @@
 {
   "name": "mmm-caldav",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "CalDAV translator for MagicMirror",
   "main": "MMM-CalDAV.js",
-  "type":"commonjs",
+  "type": "commonjs",
   "scripts": {
     "demo": "cd ../../ && MM_CONFIG_FILE=modules/MMM-CalDAV/demo.config.js node --run start:dev",
     "test": "node --run lint && node --test",
