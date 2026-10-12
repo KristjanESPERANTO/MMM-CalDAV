@@ -1,4 +1,7 @@
-require('dotenv').config()
+const path = require('path')
+const existsSync = require('fs').existsSync
+const envPath = path.resolve(__dirname, '.env')
+if (existsSync(envPath)) process.loadEnvFile(envPath)
 const app = require('express')()
 const { google } = require('googleapis')
 

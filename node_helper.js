@@ -1,10 +1,11 @@
 const path = require('path')
-require('dotenv').config({ path: path.resolve(__dirname, '.env') })
+const existsSync = require('fs').existsSync
+const envPath = path.resolve(__dirname, '.env')
+if (existsSync(envPath)) process.loadEnvFile(envPath)
 const { DAVClient, DAVNamespace } = require('tsdav')
 const vCard = require('vcard-parser')
 const fs = require('fs').promises
 const createReadStream = require('fs').createReadStream
-const existsSync = require('fs').existsSync
 
 var NodeHelper = require('node_helper')
 class Fetcher {

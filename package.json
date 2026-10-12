@@ -19,12 +19,14 @@
   ],
   "author": "eouia0819@gmail.com",
   "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "bugs": {
     "url": "https://github.com/MMRIZE/MMM-CalDAV/issues"
   },
   "homepage": "https://github.com/MMRIZE/MMM-CalDAV#readme",
   "dependencies": {
-    "dotenv": "^16.4.5",
     "tsdav": "^2.1.2",
     "vcard-parser": "^1.0.0"
   },
