@@ -48,7 +48,7 @@ class Fetcher {
     }
 
     const convertDate = (str) => {
-      let formatted = ''
+      let formatted
       if (/^\d{8}$/.test(str)) {
         formatted = str.replace(
           /(\d{4})(\d{2})(\d{2})/,
