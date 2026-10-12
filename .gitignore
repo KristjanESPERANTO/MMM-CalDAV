@@ -105,3 +105,4 @@ dist
 
 .ics
 /service/*.ics
+!/service/.CALDAV_DEMO_Demo.ics

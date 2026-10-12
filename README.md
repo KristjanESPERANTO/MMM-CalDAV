@@ -27,6 +27,15 @@ git pull
 npm update
 ```
 
+## Demo
+The demo connects to the public [CalDAV demo server](https://www.caldavserver.com/) and reads its `Cal 1` calendar. Public test credentials and local feed credentials are configured automatically; no account setup or `.env` edits are required. If the public server rotates its credentials, override `CALDAV_DEMO_username` and `CALDAV_DEMO_password` in `.env`.
+
+The public server is intended for light testing, not load testing, and its calendars may be empty. The demo includes a local weekly sample event in the generated feed, which the normal helper refreshes when the remote calendar contains events.
+
+```sh
+npm run demo
+```
+
 ## Configuration
 > You have to read **`.env` and Preparation** Section also.
 ```js
