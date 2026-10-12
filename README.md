@@ -349,7 +349,7 @@ servers: [
 ## Not a bug but,...
 - Connecting to CalDAV server and getting calendar data might take some time. So on the first bootup after installation of this module, the calendar module could not load any data. Please wait a while for the next updating cycle. After the first ICAL file, the events will be reflected on the next calendar's update time regardless of rebooting.
 - I have not tested all the possible CalDAV servers. So if you can find any issue on the various CalDAVs, feel free to make a PR for it.
-- For the purpose of this module, the generated `.ics` is designed to be hidden and not accessible without auth intentionally. You should use `CALDAV_SERVER_USERNAME` and `CALDAV_SERVER_PASSWORD` with `Basic` auth to access that URL.
+- For the purpose of this module, the generated `.ics` is designed to be hidden and not accessible without auth intentionally. You should use `CALDAV_SERVICE_USERNAME` and `CALDAV_SERVICE_PASSWORD` with `Basic` auth to access that URL.
 - If the name of generated `.ics` is duplicated, it will be overwritten. Separate them with `icsName` by manual.
 - At this moment, all address books will be retrieved. Filtering is not supported. (I need help to get real examples to know the multi-addressbooks structure.)
 
