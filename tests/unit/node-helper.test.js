@@ -10,10 +10,12 @@ const state = {
   addressBooks: [],
   calendars: [],
   calendarObjects: {},
+  credentials: null,
   fetchedAddressBooks: [],
   fetchedCalendars: [],
   fetchError: null,
   errors: [],
+  loginCalls: 0,
   parsedCards: {},
   vcards: {},
 }
@@ -21,7 +23,13 @@ const writes = []
 let writeFile = async () => {}
 
 class MockDavClient {
-  async login() {}
+  constructor({ credentials }) {
+    state.credentials = credentials
+  }
+
+  async login() {
+    state.loginCalls += 1
+  }
 
   async fetchAddressBooks() {
     return state.addressBooks
@@ -75,10 +83,12 @@ beforeEach(() => {
   state.addressBooks = []
   state.calendars = []
   state.calendarObjects = {}
+  state.credentials = null
   state.fetchedAddressBooks = []
   state.fetchedCalendars = []
   state.fetchError = null
   state.errors = []
+  state.loginCalls = 0
   state.parsedCards = {}
   state.vcards = {}
   writes.length = 0
@@ -109,6 +119,20 @@ function startFetcher(t, server) {
   })
 
   return { finished, timerScheduled: () => timerScheduled }
+}
+
+function snapshotEnvironment(keys) {
+  return Object.fromEntries(keys.map((key) => [key, process.env[key]]))
+}
+
+function restoreEnvironment(snapshot) {
+  for (const [key, value] of Object.entries(snapshot)) {
+    if (value === undefined) {
+      delete process.env[key]
+    } else {
+      process.env[key] = value
+    }
+  }
 }
 
 describe('MMM-CalDAV node helper', () => {
@@ -219,6 +243,72 @@ describe('MMM-CalDAV node helper', () => {
     assert.equal(state.errors.length, 1)
     assert.equal(state.errors[0][0], state.fetchError)
     assert.equal(writes.length, 0)
+  })
+
+  test('reports missing OAuth environment keys before login without exposing values', async (t) => {
+    const envPrefix = 'MMM_CALDAV_MISSING_OAUTH_TEST_'
+    const credentialNames = ['username', 'refreshToken', 'clientId', 'clientSecret', 'tokenUrl']
+    const keys = credentialNames.map((name) => `${envPrefix}${name}`)
+    const previousEnvironment = snapshotEnvironment(keys)
+    for (const key of keys) delete process.env[key]
+    process.env[`${envPrefix}clientSecret`] = 'do-not-log-this-secret'
+
+    try {
+      const run = startFetcher(t, {
+        envPrefix,
+        authMethod: 'Oauth',
+        defaultAccountType: 'caldav',
+        timeRangeStart: 0,
+        timeRangeEnd: 1,
+        updateInterval: 60000,
+        targets: [],
+      })
+      await run.finished
+
+      assert.equal(state.loginCalls, 0)
+      assert.equal(state.errors.length, 1)
+      assert.match(state.errors[0][0].message, /MMM_CALDAV_MISSING_OAUTH_TEST_username/)
+      assert.match(state.errors[0][0].message, /MMM_CALDAV_MISSING_OAUTH_TEST_refreshToken/)
+      assert.doesNotMatch(state.errors[0][0].message, /do-not-log-this-secret/)
+    } finally {
+      restoreEnvironment(previousEnvironment)
+    }
+  })
+
+  test('maps prefixed OAuth environment keys to tsdav credentials', async (t) => {
+    const envPrefix = 'MMM_CALDAV_VALID_OAUTH_TEST_'
+    const values = {
+      username: 'user@example.test',
+      refreshToken: 'test-refresh-token',
+      clientId: 'test-client-id',
+      clientSecret: 'test-client-secret',
+      tokenUrl: 'https://accounts.google.com/o/oauth2/token',
+    }
+    const keys = Object.keys(values).map((name) => `${envPrefix}${name}`)
+    const previousEnvironment = snapshotEnvironment(keys)
+
+    try {
+      for (const [name, value] of Object.entries(values)) {
+        process.env[`${envPrefix}${name}`] = value
+      }
+
+      const run = startFetcher(t, {
+        envPrefix,
+        authMethod: 'Oauth',
+        defaultAccountType: 'caldav',
+        timeRangeStart: 0,
+        timeRangeEnd: 1,
+        updateInterval: 60000,
+        targets: [],
+      })
+      await run.finished
+
+      assert.deepEqual(state.errors, [])
+      assert.equal(state.loginCalls, 1)
+      assert.deepEqual(state.credentials, values)
+    } finally {
+      restoreEnvironment(previousEnvironment)
+    }
   })
 
   test('generates a yearly all-day event for a CardDAV birthday', async (t) => {

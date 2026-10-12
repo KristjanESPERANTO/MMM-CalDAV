@@ -8,6 +8,8 @@ const fs = require('fs').promises
 const createReadStream = require('fs').createReadStream
 
 const NodeHelper = require('node_helper')
+const requiredOAuthCredentials = [ 'username', 'refreshToken', 'clientId', 'clientSecret', 'tokenUrl' ]
+
 class Fetcher {
   constructor(options) {
     const prefix = options.envPrefix || ''
@@ -90,6 +92,13 @@ class Fetcher {
     }
 
     try {
+      if (authMethod === 'Oauth') {
+        const missingCredentials = requiredOAuthCredentials.filter(key => !credentials[key]?.trim())
+        if (missingCredentials.length > 0) {
+          const envKeys = missingCredentials.map(key => `${envPrefix || ''}${key}`)
+          throw new Error(`Missing OAuth credentials: ${envKeys.join(', ')}. Check envPrefix and .env key names.`)
+        }
+      }
       await client.login()
       if (defaultAccountType === 'carddav') { //carddav
         const fetchedAddressBooks = await client.fetchAddressBooks()
