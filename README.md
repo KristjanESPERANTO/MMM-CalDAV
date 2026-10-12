@@ -1,5 +1,5 @@
 # MMM-CalDAV
-![screenshot](https://raw.githubusercontent.com/MMRIZE/public_ext_storage/main/MMM-CalDAV/screenshot.png)
+![screenshot](screenshot.png)
 CalDav broker for MagicMirror
 
 ## Concept & Motivation
@@ -100,6 +100,8 @@ You can use the URL as a feed of the calendar module(e.g. default calendar modul
         }
       },
 ...
+  }
+},
 ```
 The real extracted & parsed result will be stored under `modules/MMM-CalDAV/service` as a hidden `.ics` file. If you need to reset the previously stored data, just delete them there.
 
@@ -198,10 +200,10 @@ CALDAV_SERVICE_PASSWORD=password1
           method: 'basic'
         }
       },
-...
+    ...
+  }
+},
 ```
-
-
 
 ### For Apple (ICLOUD) calendar
 You need `app-specific password` to use this module. Read [this](https://support.apple.com/en-us/102654)
