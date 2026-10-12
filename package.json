@@ -6,7 +6,7 @@
   "type":"commonjs",
   "scripts": {
     "demo": "cd ../../ && MM_CONFIG_FILE=modules/MMM-CalDAV/demo.config.js node --run start:dev",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --run lint && node --test",
     "postinstall": "cp -n env.example .env",
     "release": "commit-and-tag-version",
     "lint": "eslint",

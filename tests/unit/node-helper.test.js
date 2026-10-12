@@ -1,0 +1,227 @@
+const assert = require('node:assert/strict')
+const Module = require('node:module')
+const path = require('node:path')
+const realFs = require('node:fs')
+const { beforeEach, describe, test } = require('node:test')
+
+const helperPath = require.resolve('../../node_helper.js')
+const realSetTimeout = global.setTimeout
+const state = {
+  addressBooks: [],
+  calendars: [],
+  calendarObjects: {},
+  fetchedAddressBooks: [],
+  fetchedCalendars: [],
+  errors: [],
+  parsedCards: {},
+  vcards: {},
+}
+const writes = []
+let writeFile = async () => {}
+
+class MockDavClient {
+  async login() {}
+
+  async fetchAddressBooks() {
+    return state.addressBooks
+  }
+
+  async fetchCalendars() {
+    return state.calendars
+  }
+
+  async fetchCalendarObjects({ calendar }) {
+    state.fetchedCalendars.push(calendar.displayName)
+    return state.calendarObjects[calendar.displayName] || []
+  }
+
+  async fetchVCards({ addressBook }) {
+    state.fetchedAddressBooks.push(addressBook.displayName)
+    return state.vcards[addressBook.displayName] || []
+  }
+}
+
+const mockedFs = {
+  existsSync: () => false,
+  promises: {
+    writeFile: (...args) => writeFile(...args),
+  },
+  createReadStream: realFs.createReadStream,
+}
+
+const originalLoad = Module._load
+Module._load = function (request, parent, isMain) {
+  if (parent?.filename === helperPath) {
+    if (request === 'node_helper') return { create: (definition) => definition }
+    if (request === 'tsdav') return { DAVClient: MockDavClient }
+    if (request === 'vcard-parser') {
+      return { parse: (value) => state.parsedCards[value] }
+    }
+    if (request === 'fs') return mockedFs
+  }
+  return originalLoad.call(this, request, parent, isMain)
+}
+
+let helper
+try {
+  helper = require('../../node_helper.js')
+} finally {
+  Module._load = originalLoad
+}
+
+beforeEach(() => {
+  state.addressBooks = []
+  state.calendars = []
+  state.calendarObjects = {}
+  state.fetchedAddressBooks = []
+  state.fetchedCalendars = []
+  state.errors = []
+  state.parsedCards = {}
+  state.vcards = {}
+  writes.length = 0
+  writeFile = async (filePath, content) => {
+    writes.push({ filePath, content })
+  }
+})
+
+function startFetcher(t, server) {
+  let finishWork
+  let timerScheduled = false
+  const finished = new Promise((resolve) => {
+    finishWork = resolve
+  })
+  t.mock.method(global, 'setTimeout', (callback, delay, ...args) => {
+    if (delay === server.updateInterval) {
+      timerScheduled = true
+      finishWork()
+      return 1
+    }
+    return realSetTimeout.call(global, callback, delay, ...args)
+  })
+  t.mock.method(console, 'log', () => {})
+  t.mock.method(console, 'error', (...args) => state.errors.push(args))
+
+  helper.socketNotificationReceived.call({ fetchers: [] }, 'REGISTER', {
+    servers: [server],
+  })
+
+  return { finished, timerScheduled: () => timerScheduled }
+}
+
+describe('MMM-CalDAV node helper', () => {
+  test('filters calendars and awaits writing the matching ICS feed', async (t) => {
+    let releaseWrite
+    let signalWriteStarted
+    const writeStarted = new Promise((resolve) => {
+      signalWriteStarted = resolve
+    })
+    const writeBarrier = new Promise((resolve) => {
+      releaseWrite = resolve
+    })
+    writeFile = async (filePath, content) => {
+      writes.push({ filePath, content })
+      signalWriteStarted()
+      await writeBarrier
+    }
+    state.calendars = [
+      { displayName: 'Family' },
+      { displayName: 'Work' },
+    ]
+    state.calendarObjects.Family = [{
+      data: Buffer.from([
+        'BEGIN:VCALENDAR',
+        'BEGIN:VEVENT',
+        'UID:family-event',
+        'SUMMARY:Family event',
+        'END:VEVENT',
+        'BEGIN:VTODO',
+        'UID:ignored-task',
+        'END:VTODO',
+        'END:VCALENDAR',
+      ].join('\r\n')),
+    }]
+    state.calendarObjects.Work = [{
+      data: Buffer.from('BEGIN:VEVENT\r\nUID:work-event\r\nEND:VEVENT'),
+    }]
+
+    const run = startFetcher(t, {
+      envPrefix: 'UNIT_CALDAV_',
+      serverUrl: 'https://caldav.example.test',
+      defaultAccountType: 'caldav',
+      timeRangeStart: 0,
+      timeRangeEnd: 1,
+      expand: true,
+      useMultiGet: true,
+      updateInterval: 60000,
+      targets: [{ displayName: 'Family', icsName: 'family-feed' }],
+    })
+
+    await writeStarted
+    try {
+      assert.equal(run.timerScheduled(), false)
+    } finally {
+      releaseWrite()
+    }
+    await run.finished
+
+    assert.deepEqual(state.fetchedCalendars, ['Family'])
+    assert.equal(writes.length, 1)
+    assert.equal(path.basename(writes[0].filePath), '.UNIT_CALDAV_family_feed.ics')
+    assert.match(writes[0].content, /BEGIN:VCALENDAR[\s\S]*UID:family-event[\s\S]*END:VCALENDAR/)
+    assert.doesNotMatch(writes[0].content, /ignored-task|work-event/)
+  })
+
+  test('does not write a feed when the selected calendar has no events', async (t) => {
+    state.calendars = [{ displayName: 'Empty' }]
+    state.calendarObjects.Empty = [{
+      data: Buffer.from('BEGIN:VCALENDAR\r\nEND:VCALENDAR'),
+    }]
+
+    const run = startFetcher(t, {
+      envPrefix: 'UNIT_CALDAV_',
+      defaultAccountType: 'caldav',
+      timeRangeStart: 0,
+      timeRangeEnd: 1,
+      updateInterval: 60000,
+      targets: [{ displayName: 'Empty' }],
+    })
+    await run.finished
+
+    assert.deepEqual(state.errors, [])
+    assert.deepEqual(state.fetchedCalendars, ['Empty'])
+    assert.equal(writes.length, 0)
+  })
+
+  test('generates a yearly all-day event for a CardDAV birthday', async (t) => {
+    state.addressBooks = [{ displayName: 'Contacts' }]
+    state.vcards.Contacts = [{ data: Buffer.from('contact-1') }]
+    state.parsedCards['contact-1'] = {
+      bday: [{ value: '2000-06-15' }],
+      uid: [{ value: 'birthday-1' }],
+      rev: [{ value: '2024-01-02T03:04:05.000Z' }],
+      fn: [{ value: 'Ada Lovelace' }],
+    }
+
+    const run = startFetcher(t, {
+      envPrefix: 'UNIT_CALDAV_',
+      defaultAccountType: 'carddav',
+      updateInterval: 60000,
+      targets: [{ displayName: 'Contacts', icsName: 'birthdays' }],
+    })
+    await run.finished
+
+    assert.deepEqual(state.errors, [])
+    assert.deepEqual(state.fetchedAddressBooks, ['Contacts'])
+    const birthday = new Date('2000-06-15')
+    const birthdayEnd = new Date(birthday.getFullYear(), birthday.getMonth(), birthday.getDate() + 1)
+    const formatDate = (date) => `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`
+
+    assert.equal(writes.length, 1)
+    assert.equal(path.basename(writes[0].filePath), '.UNIT_CALDAV_birthdays.ics')
+    assert.match(writes[0].content, /UID:birthday-1/)
+    assert.match(writes[0].content, /SUMMARY:Ada Lovelace/)
+    assert.match(writes[0].content, new RegExp(`DTSTART;VALUE=DATE:${formatDate(birthday)}`))
+    assert.match(writes[0].content, new RegExp(`DTEND;VALUE=DATE:${formatDate(birthdayEnd)}`))
+    assert.match(writes[0].content, /RRULE:FREQ=YEARLY/)
+  })
+})
