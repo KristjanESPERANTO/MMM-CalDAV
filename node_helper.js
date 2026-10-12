@@ -120,7 +120,7 @@ END:VEVENT`)
             }
           }
           const fileName = targets[ targets.findIndex(c => c.displayName === addressBook.displayName) ]?.icsName || addressBook.displayName || ''
-          saveIcs(fileName, birthdays.join('\r\n'))
+          await saveIcs(fileName, birthdays.join('\r\n'))
         }
       } else { // caldav
         const today = new Date(Date.now())
@@ -148,7 +148,7 @@ END:VEVENT`)
             }
           }, '')
           const fileName = targets[ targets.findIndex(c => c.displayName === calendar.displayName) ]?.icsName || calendar.displayName || ''
-          saveIcs(fileName, vevents)
+          await saveIcs(fileName, vevents)
 
         }
       }
